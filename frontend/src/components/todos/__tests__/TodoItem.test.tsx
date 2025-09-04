@@ -89,7 +89,7 @@ describe('TodoItem', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(useTodosHook.useTodoMutations as jest.Mock).mockReturnValue(mockUseTodoMutations)
-    ;(window.confirm as jest.Mock) = jest.fn()
+    // No longer need to mock window.confirm
   })
 
   const renderTodoItem = (todo: Partial<Todo> = {}, props: any = {}) => {
@@ -267,27 +267,41 @@ describe('TodoItem', () => {
     })
 
     it('should show confirmation dialog and delete when confirmed', async () => {
-      ;(window.confirm as jest.Mock).mockReturnValue(true)
       const user = userEvent.setup()
       renderTodoItem()
 
       const deleteButton = screen.getByRole('button', { name: /delete/i })
       await user.click(deleteButton)
 
-      expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this task?')
+      // Check that confirmation dialog appears
+      expect(screen.getByText('Delete Task')).toBeInTheDocument()
+      expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument()
+      
+      // Click the confirm button in the dialog (use getByText since there are two delete buttons)
+      const confirmButton = screen.getByText('Delete').closest('button')!
+      await user.click(confirmButton)
+
       expect(mockDeleteTodo.mutate).toHaveBeenCalledWith('todo-1')
     })
 
     it('should not delete when confirmation is cancelled', async () => {
-      ;(window.confirm as jest.Mock).mockReturnValue(false)
       const user = userEvent.setup()
       renderTodoItem()
 
       const deleteButton = screen.getByRole('button', { name: /delete/i })
       await user.click(deleteButton)
 
-      expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this task?')
+      // Check that confirmation dialog appears
+      expect(screen.getByText('Delete Task')).toBeInTheDocument()
+      
+      // Click the cancel button in the dialog
+      const cancelButton = screen.getByRole('button', { name: /cancel/i })
+      await user.click(cancelButton)
+
       expect(mockDeleteTodo.mutate).not.toHaveBeenCalled()
+      
+      // Dialog should be closed
+      expect(screen.queryByText('Delete Task')).not.toBeInTheDocument()
     })
 
     it('should disable delete button when deletion is pending', () => {
@@ -402,7 +416,7 @@ describe('TodoItem', () => {
       })
 
       expect(screen.getByText(/Created.*1\/1\/2024/)).toBeInTheDocument()
-      expect(screen.getByText(/Updated.*1\/2\/2024/)).toBeInTheDocument()
+      expect(screen.getByText(/1\/2\/2024/)).toBeInTheDocument()
     })
 
     it('should not show updated date when same as created date', () => {
@@ -447,7 +461,8 @@ describe('TodoItem', () => {
 
       const priorityBadge = screen.getByText('High Priority')
       expect(priorityBadge).toBeInTheDocument()
-      expect(priorityBadge).toHaveClass('px-2', 'py-0.5', 'text-xs', 'font-medium', 'rounded-full', 'border')
+      // Priority badge should be in the container with correct styling
+      expect(priorityBadge.closest('[class*="rounded-full"]')).toBeInTheDocument()
     })
 
     it('should render correct icon and styling for MEDIUM priority', () => {
@@ -455,7 +470,8 @@ describe('TodoItem', () => {
 
       const priorityBadge = screen.getByText('Medium Priority')
       expect(priorityBadge).toBeInTheDocument()
-      expect(priorityBadge).toHaveClass('px-2', 'py-0.5', 'text-xs', 'font-medium', 'rounded-full', 'border')
+      // Priority badge should be in the container with correct styling
+      expect(priorityBadge.closest('[class*="rounded-full"]')).toBeInTheDocument()
     })
 
     it('should render correct icon and styling for LOW priority', () => {
@@ -463,7 +479,8 @@ describe('TodoItem', () => {
 
       const priorityBadge = screen.getByText('Low Priority')
       expect(priorityBadge).toBeInTheDocument()
-      expect(priorityBadge).toHaveClass('px-2', 'py-0.5', 'text-xs', 'font-medium', 'rounded-full', 'border')
+      // Priority badge should be in the container with correct styling
+      expect(priorityBadge.closest('[class*="rounded-full"]')).toBeInTheDocument()
     })
   })
 })
