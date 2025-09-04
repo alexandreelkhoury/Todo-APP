@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { TodoItem } from './TodoItem'
 import { TodoForm } from './TodoForm'
 import { DraggableTaskList } from './DraggableTaskList'
@@ -21,11 +22,14 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
-  Share2
+  Share2,
+  AlertCircle
 } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { LoadingSpinner, TodoSkeleton, StatsSkeleton } from '@/components/ui/LoadingSpinner'
 
 export function TodoList() {
+  const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | undefined>()
   const [searchTerm, setSearchTerm] = useState('')
@@ -116,18 +120,73 @@ export function TodoList() {
     setCompletedPage(1)
   }
 
-  if (incompleteLoading) {
+  // Loading states with proper skeletons
+  if (incompleteLoading && !incompleteTodosResponse) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-6">
+        {/* Stats Loading */}
+        <StatsSkeleton />
+        
+        {/* Header Loading */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-32 mb-2"></div>
+            <div className="h-4 bg-gray-100 rounded w-48"></div>
+          </div>
+          <div className="animate-pulse flex gap-2">
+            <div className="h-10 bg-gray-200 rounded w-20"></div>
+            <div className="h-10 bg-blue-200 rounded w-24"></div>
+          </div>
+        </div>
+        
+        {/* Search and Filters Loading */}
+        <div className="space-y-4">
+          <div className="animate-pulse h-12 bg-gray-100 rounded-lg"></div>
+          <div className="animate-pulse flex gap-4">
+            <div className="h-10 bg-gray-100 rounded w-32"></div>
+            <div className="h-10 bg-gray-100 rounded w-40"></div>
+          </div>
+        </div>
+        
+        {/* Todo Items Loading */}
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <TodoSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
 
+  // Error states with retry options
   if (incompleteError) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600">Failed to load tasks. Please try again.</p>
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="rounded-full bg-red-100 p-3 mb-4">
+          <AlertCircle className="h-8 w-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load tasks</h3>
+        <p className="text-gray-600 text-center mb-6 max-w-md">
+          We couldn't load your tasks. This might be due to a network issue or server problem.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="min-h-[44px]"
+          >
+            Try Again
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              // Clear error and refetch
+              queryClient.invalidateQueries({ queryKey: ['todos'] })
+            }}
+            className="min-h-[44px]"
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
     )
   }
@@ -139,40 +198,40 @@ export function TodoList() {
     <div className="space-y-6">
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border shadow-sm" style={{ backgroundColor: 'var(--accent-secondary)', borderColor: 'var(--card-border)' }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl border shadow-sm" style={{ backgroundColor: 'var(--accent-secondary)', borderColor: 'var(--card-border)' }}>
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
-              <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--accent-primary)' }}>Total</p>
-                <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.total}</p>
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium truncate" style={{ color: 'var(--accent-primary)' }}>Total</p>
+                <p className="text-lg sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.total}</p>
               </div>
             </div>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+          <div className="bg-green-50 p-3 sm:p-4 rounded-lg border border-green-200">
             <div className="flex items-center gap-2">
-              <CheckSquare className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-sm text-green-600 font-medium">Completed</p>
-                <p className="text-2xl font-bold text-green-700">{stats.completed}</p>
+              <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-green-600 font-medium truncate">Done</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-700">{stats.completed}</p>
               </div>
             </div>
           </div>
-          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <div className="bg-orange-50 p-3 sm:p-4 rounded-lg border border-orange-200">
             <div className="flex items-center gap-2">
-              <Square className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="text-sm text-orange-600 font-medium">Pending</p>
-                <p className="text-2xl font-bold text-orange-700">{stats.pending}</p>
+              <Square className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-orange-600 font-medium truncate">Active</p>
+                <p className="text-lg sm:text-2xl font-bold text-orange-700">{stats.pending}</p>
               </div>
             </div>
           </div>
-          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+          <div className="bg-red-50 p-3 sm:p-4 rounded-lg border border-red-200">
             <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5 text-red-600" />
-              <div>
-                <p className="text-sm text-red-600 font-medium">High Priority</p>
-                <p className="text-2xl font-bold text-red-700">{stats.priority.high}</p>
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-red-600 font-medium truncate">High</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-700">{stats.priority.high}</p>
               </div>
             </div>
           </div>
@@ -180,20 +239,20 @@ export function TodoList() {
       )}
 
       {/* Header with Add Button and Share Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>My Tasks</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>My Tasks</h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {incompleteTodos.length} active, {stats?.completed || 0} completed
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-3">
           <ShareActions 
             todos={incompleteTodos} 
             completedTodos={completedTodos}
             stats={stats}
           />
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => setShowForm(true)} className="min-h-[44px]">
             <Plus className="h-4 w-4" />
             Add Task
           </Button>
@@ -204,11 +263,11 @@ export function TodoList() {
       <div className="space-y-4">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
           <input
             type="text"
             placeholder="Search tasks..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-3 sm:py-2 border rounded-lg bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base sm:text-sm"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value)
@@ -218,9 +277,9 @@ export function TodoList() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <select
-            className="px-3 py-1.5 text-sm border rounded-lg bg-white border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 h-10 text-sm border rounded-lg bg-white border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-w-[160px]"
             value={selectedPriority}
             onChange={(e) => {
               setSelectedPriority(e.target.value as Priority | '')
@@ -234,41 +293,43 @@ export function TodoList() {
           </select>
 
           {/* Sort Options */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sort:</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleSort('createdAt')}
-              className="gap-1"
-            >
-              Date
-              {sortBy === 'createdAt' && (
-                sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleSort('priority')}
-              className="gap-1"
-            >
-              Priority
-              {sortBy === 'priority' && (
-                sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleSort('title')}
-              className="gap-1"
-            >
-              Title
-              {sortBy === 'title' && (
-                sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
-              )}
-            </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Sort by:</span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleSort('createdAt')}
+                className="gap-1 h-10 px-3 text-sm"
+              >
+                Date
+                {sortBy === 'createdAt' && (
+                  sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleSort('priority')}
+                className="gap-1 h-10 px-3 text-sm"
+              >
+                Priority
+                {sortBy === 'priority' && (
+                  sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleSort('title')}
+                className="gap-1 h-10 px-3 text-sm"
+              >
+                Title
+                {sortBy === 'title' && (
+                  sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -276,17 +337,17 @@ export function TodoList() {
       {/* Active Tasks */}
       <div className="space-y-3">
         {incompleteTodos.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <Square className="h-8 w-8 text-gray-400" />
+          <div className="text-center py-8 sm:py-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Square className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="text-base sm:text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
               No active tasks
             </h3>
-            <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm mb-4 px-4" style={{ color: 'var(--text-secondary)' }}>
               Create your first task to get started.
             </p>
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => setShowForm(true)} className="min-h-[48px] sm:min-h-[44px] px-6">
               <Plus className="h-4 w-4" />
               Add Your First Task
             </Button>
@@ -349,12 +410,25 @@ export function TodoList() {
           {showCompleted && (
             <div className="mt-4 space-y-3">
               {completedLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="opacity-50">
+                      <TodoSkeleton />
+                    </div>
+                  ))}
                 </div>
               ) : completedError ? (
-                <div className="text-center py-4">
-                  <p className="text-red-600 text-sm">Failed to load completed tasks.</p>
+                <div className="text-center py-6">
+                  <div className="inline-flex items-center gap-2 text-red-600">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm">Failed to load completed tasks</span>
+                  </div>
+                  <button 
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['todos'] })}
+                    className="block mt-2 text-sm text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Try again
+                  </button>
                 </div>
               ) : completedTodos.length === 0 ? (
                 <div className="text-center py-8">

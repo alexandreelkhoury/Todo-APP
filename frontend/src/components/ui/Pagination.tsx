@@ -70,9 +70,9 @@ export function Pagination({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-white">
+    <div className="flex flex-col lg:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-white">
       {/* Items Info */}
-      <div className="text-sm text-gray-700">
+      <div className="text-xs sm:text-sm text-gray-700 text-center lg:text-left">
         Showing <span className="font-medium">{startItem}</span> to{' '}
         <span className="font-medium">{endItem}</span> of{' '}
         <span className="font-medium">{totalItems}</span> results
@@ -80,14 +80,14 @@ export function Pagination({
 
       {/* Pagination Controls - Only show if multiple pages */}
       {totalPages > 1 && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-1 sm:gap-2 overflow-x-auto">
           {/* First Page */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPageChange(1)}
             disabled={currentPage === 1}
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 flex-shrink-0"
             title="First page"
           >
             <ChevronsLeft className="h-4 w-4" />
@@ -99,7 +99,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 flex-shrink-0"
             title="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -110,7 +110,7 @@ export function Pagination({
             {getVisiblePages().map((page, index) => {
               if (page === '...') {
                 return (
-                  <div key={`ellipsis-${index}`} className="px-2">
+                  <div key={`ellipsis-${index}`} className="px-1 sm:px-2">
                     <MoreHorizontal className="h-4 w-4 text-gray-400" />
                   </div>
                 )
@@ -122,7 +122,7 @@ export function Pagination({
                   variant={page === currentPage ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => onPageChange(page as number)}
-                  className="h-8 min-w-[32px] px-2"
+                  className="h-9 min-w-[36px] px-2 flex-shrink-0"
                 >
                   {page}
                 </Button>
@@ -136,7 +136,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 flex-shrink-0"
             title="Next page"
           >
             <ChevronRight className="h-4 w-4" />
@@ -148,7 +148,7 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(totalPages)}
             disabled={currentPage === totalPages}
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 flex-shrink-0"
             title="Last page"
           >
             <ChevronsRight className="h-4 w-4" />
@@ -158,12 +158,12 @@ export function Pagination({
 
       {/* Items Per Page Selector */}
       {showItemsPerPageSelector && onItemsPerPageChange && (
-        <div className="flex items-center gap-2 text-sm">
-          <label className="text-gray-700">Items per page:</label>
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-xs sm:text-sm">
+          <label className="text-gray-700 whitespace-nowrap">Items per page:</label>
           <select
             value={itemsPerPage}
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-            className="h-8 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="h-9 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-[60px]"
           >
             {itemsPerPageOptions.map((option) => (
               <option key={option} value={option}>
