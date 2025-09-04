@@ -52,12 +52,15 @@ export class TodosService {
       query.sortOrder || SortOrder.DESC,
     );
 
-    const [todos, total] = await Promise.all([
-      this.prisma.todo.findMany({
+    // For priority sorting, get all results and sort manually
+    const sortBy = query.sortBy || SortBy.CREATED_AT;
+    const sortOrder = query.sortOrder || SortOrder.DESC;
+
+    if (sortBy === SortBy.PRIORITY) {
+      // Get all results for priority sorting (without pagination first)
+      const allTodos = await this.prisma.todo.findMany({
         where,
-        orderBy,
-        skip,
-        take: limit,
+        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
         include: {
           user: {
             select: {
@@ -67,19 +70,64 @@ export class TodosService {
             },
           },
         },
-      }),
-      this.prisma.todo.count({ where }),
-    ]);
+      });
 
-    return {
-      todos,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      // Sort by priority manually
+      const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+      const sortedTodos = allTodos.sort((a, b) => {
+        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+        
+        if (sortOrder === SortOrder.ASC) {
+          return aPriority - bPriority;
+        } else {
+          return bPriority - aPriority;
+        }
+      });
+
+      // Apply pagination manually
+      const todos = sortedTodos.slice(skip, skip + limit);
+      const total = sortedTodos.length;
+
+      return {
+        todos,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } else {
+      const [todos, total] = await Promise.all([
+        this.prisma.todo.findMany({
+          where,
+          orderBy,
+          skip,
+          take: limit,
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+              },
+            },
+          },
+        }),
+        this.prisma.todo.count({ where }),
+      ]);
+
+      return {
+        todos,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
   }
 
   async findOne(id: string, userId: string) {
@@ -212,6 +260,7 @@ export class TodosService {
 
     switch (sortBy) {
       case SortBy.PRIORITY:
+        // Priority sorting is handled separately with raw SQL
         return [...baseOrder, { priority: order }, { createdAt: 'desc' }];
       case SortBy.DUE_DATE:
         return [...baseOrder, { dueDate: order }, { createdAt: 'desc' }];
