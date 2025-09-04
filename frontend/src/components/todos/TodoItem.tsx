@@ -24,6 +24,7 @@ interface TodoItemProps {
   todo: Todo
   onEdit: (todo: Todo) => void
   isDragging?: boolean
+  showCreatedDate?: boolean
 }
 
 const priorityConfig = {
@@ -56,7 +57,7 @@ const priorityConfig = {
   },
 }
 
-export function TodoItem({ todo, onEdit, isDragging = false }: TodoItemProps) {
+export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = true }: TodoItemProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const { toggleComplete, togglePin, deleteTodo } = useTodoMutations()
@@ -210,19 +211,21 @@ export function TodoItem({ todo, onEdit, isDragging = false }: TodoItemProps) {
             </div>
 
             {/* Metadata */}
-            <div className="mt-2 text-xs text-gray-500 leading-relaxed">
-              <div className="sm:inline">
-                Created {formatDate(todo.createdAt)}
-              </div>
-              {todo.updatedAt !== todo.createdAt && (
+            {showCreatedDate && (
+              <div className="mt-2 text-xs text-gray-500 leading-relaxed">
                 <div className="sm:inline">
-                  <span className="hidden sm:inline"> • </span>
-                  <span className="sm:hidden">Updated </span>
-                  <span className="hidden sm:inline">Updated </span>
-                  {formatDate(todo.updatedAt)}
+                  Created {formatDate(todo.createdAt)}
                 </div>
-              )}
-            </div>
+                {todo.updatedAt !== todo.createdAt && (
+                  <div className="sm:inline">
+                    <span className="hidden sm:inline"> • </span>
+                    <span className="sm:hidden">Updated </span>
+                    <span className="hidden sm:inline">Updated </span>
+                    {formatDate(todo.updatedAt)}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
