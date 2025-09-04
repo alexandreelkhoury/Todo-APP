@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { TodoItem } from './TodoItem'
 import { TodoForm } from './TodoForm'
+import { TodoGroup } from './TodoGroup'
 import { DraggableTaskList } from './DraggableTaskList'
 import { ShareActions } from './ShareActions'
 import { Button } from '@/components/ui/Button'
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
 import { LoadingSpinner, TodoSkeleton, StatsSkeleton } from '@/components/ui/LoadingSpinner'
+import { groupTodosByDate } from '@/lib/dateUtils'
 
 export function TodoList() {
   const queryClient = useQueryClient()
@@ -35,8 +37,9 @@ export function TodoList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showCompleted, setShowCompleted] = useState(false)
   const [selectedPriority, setSelectedPriority] = useState<Priority | ''>('')
-  const [sortBy, setSortBy] = useState<'createdAt' | 'priority' | 'dueDate' | 'title'>('createdAt')
+  const [sortBy, setSortBy] = useState<'createdAt' | 'priority' | 'dueDate'>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [showTodayOnly, setShowTodayOnly] = useState(false)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -72,6 +75,37 @@ export function TodoList() {
   const { data: incompleteTodosResponse, isLoading: incompleteLoading, error: incompleteError } = useTodos(incompleteQueryParams)
   const { data: completedTodosResponse, isLoading: completedLoading, error: completedError } = useTodos(completedQueryParams)
   const { data: stats } = useTodoStats()
+
+  // Helper function to check if a todo was created today
+  const isCreatedToday = (todo: Todo) => {
+    const todoDate = new Date(todo.createdAt)
+    const today = new Date()
+    return (
+      todoDate.getDate() === today.getDate() &&
+      todoDate.getMonth() === today.getMonth() &&
+      todoDate.getFullYear() === today.getFullYear()
+    )
+  }
+
+  // Process data immediately after hooks
+  const allIncompleteTodos = incompleteTodosResponse?.todos || []
+  const allCompletedTodos = showCompleted ? (completedTodosResponse?.todos || []) : []
+  
+  // Filter todos based on "Today Only" setting
+  const incompleteTodos = showTodayOnly 
+    ? allIncompleteTodos.filter(isCreatedToday)
+    : allIncompleteTodos
+  const completedTodos = showTodayOnly
+    ? allCompletedTodos.filter(isCreatedToday)
+    : allCompletedTodos
+  
+  // Group todos by date only when sorting by createdAt, otherwise use normal list
+  const groupedIncompleteTodos = useMemo(() => {
+    if (sortBy === 'createdAt') {
+      return groupTodosByDate(incompleteTodos, sortOrder)
+    }
+    return null
+  }, [incompleteTodos, sortBy, sortOrder])
 
   const handleEditTodo = (todo: Todo) => {
     setEditingTodo(todo)
@@ -191,8 +225,6 @@ export function TodoList() {
     )
   }
 
-  const incompleteTodos = incompleteTodosResponse?.todos || []
-  const completedTodos = showCompleted ? (completedTodosResponse?.todos || []) : []
 
   return (
     <div className="space-y-6">
@@ -241,9 +273,19 @@ export function TodoList() {
       {/* Header with Add Button and Share Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>My Tasks</h1>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {showTodayOnly ? "Today's Tasks" : "My Tasks"}
+          </h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {incompleteTodos.length} active, {stats?.completed || 0} completed
+            {showTodayOnly ? (
+              <>
+                {incompleteTodos.length} active today, {completedTodos.length} completed today
+              </>
+            ) : (
+              <>
+                {incompleteTodos.length} active, {stats?.completed || 0} completed
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-3">
@@ -292,12 +334,26 @@ export function TodoList() {
             <option value={Priority.LOW}>Low Priority</option>
           </select>
 
+          {/* Today Only Filter */}
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showTodayOnly}
+              onChange={(e) => {
+                setShowTodayOnly(e.target.checked)
+                resetPagination()
+              }}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <span className="select-none">Today Only</span>
+          </label>
+
           {/* Sort Options */}
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Sort by:</span>
             <div className="flex items-center gap-1">
               <Button
-                variant="ghost"
+                variant={sortBy === 'createdAt' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => toggleSort('createdAt')}
                 className="gap-1 h-10 px-3 text-sm"
@@ -308,24 +364,13 @@ export function TodoList() {
                 )}
               </Button>
               <Button
-                variant="ghost"
+                variant={sortBy === 'priority' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => toggleSort('priority')}
                 className="gap-1 h-10 px-3 text-sm"
               >
                 Priority
                 {sortBy === 'priority' && (
-                  sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleSort('title')}
-                className="gap-1 h-10 px-3 text-sm"
-              >
-                Title
-                {sortBy === 'title' && (
                   sortOrder === 'desc' ? <SortDesc className="h-3 w-3" /> : <SortAsc className="h-3 w-3" />
                 )}
               </Button>
@@ -359,15 +404,26 @@ export function TodoList() {
                 Active Tasks ({incompleteTodos.length})
               </h2>
             </div>
-            <DraggableTaskList
-              tasks={incompleteTodos}
-              onEdit={handleEditTodo}
-              onReorder={(reorderedTasks) => {
-                // Handle reorder - for now just update local state
-                // In a more complex app, you might want to persist this to user preferences
-                console.log('Tasks reordered:', reorderedTasks.map(t => t.title))
-              }}
-            />
+            
+            {/* Render grouped view for date sorting, regular list for other sorting */}
+            {groupedIncompleteTodos ? (
+              <div className="space-y-6">
+                {groupedIncompleteTodos.map(({ dateLabel, todos }) => (
+                  <TodoGroup
+                    key={dateLabel}
+                    dateLabel={dateLabel}
+                    todos={todos}
+                    onEdit={handleEditTodo}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {incompleteTodos.map((todo) => (
+                  <TodoItem key={todo.id} todo={todo} onEdit={handleEditTodo} />
+                ))}
+              </div>
+            )}
             
             {/* Active Tasks Pagination */}
             {incompleteTodosResponse?.pagination && incompleteTodosResponse.pagination.total > 0 && (
