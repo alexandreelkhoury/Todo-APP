@@ -36,9 +36,9 @@ export function TodoList() {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
   const [completedPage, setCompletedPage] = useState(1)
-  const [completedItemsPerPage, setCompletedItemsPerPage] = useState(10)
+  const [completedItemsPerPage, setCompletedItemsPerPage] = useState(5)
 
   // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
@@ -318,6 +318,7 @@ export function TodoList() {
                   itemsPerPage={incompleteTodosResponse.pagination.limit}
                   onPageChange={handlePageChange}
                   onItemsPerPageChange={handleItemsPerPageChange}
+                  itemsPerPageOptions={[5, 10, 20]}
                 />
               </div>
             )}
@@ -377,7 +378,7 @@ export function TodoList() {
                         itemsPerPage={completedTodosResponse.pagination.limit}
                         onPageChange={handleCompletedPageChange}
                         onItemsPerPageChange={handleCompletedItemsPerPageChange}
-                        showItemsPerPageSelector={false}
+                        itemsPerPageOptions={[5, 10, 20]}
                       />
                     </div>
                   )}
