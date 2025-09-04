@@ -7,6 +7,7 @@ import { DraggableTaskList } from './DraggableTaskList'
 import { ShareActions } from './ShareActions'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Pagination } from '@/components/ui/Pagination'
 import { useTodos, useTodoStats } from '@/hooks/useTodos'
 import { Todo, Priority, TodoQueryParams } from '@/types'
 import { 
@@ -32,6 +33,12 @@ export function TodoList() {
   const [selectedPriority, setSelectedPriority] = useState<Priority | ''>('')
   const [sortBy, setSortBy] = useState<'createdAt' | 'priority' | 'dueDate' | 'title'>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [completedPage, setCompletedPage] = useState(1)
+  const [completedItemsPerPage, setCompletedItemsPerPage] = useState(10)
 
   // Debounce search term
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
@@ -43,8 +50,9 @@ export function TodoList() {
     priority: selectedPriority || undefined,
     sortBy,
     sortOrder,
-    limit: 50,
-  }), [debouncedSearchTerm, selectedPriority, sortBy, sortOrder])
+    page: currentPage,
+    limit: itemsPerPage,
+  }), [debouncedSearchTerm, selectedPriority, sortBy, sortOrder, currentPage, itemsPerPage])
 
   // Build query parameters for completed todos
   const completedQueryParams = useMemo<TodoQueryParams>(() => ({
@@ -53,8 +61,9 @@ export function TodoList() {
     priority: selectedPriority || undefined,
     sortBy,
     sortOrder,
-    limit: 50,
-  }), [debouncedSearchTerm, selectedPriority, sortBy, sortOrder])
+    page: completedPage,
+    limit: completedItemsPerPage,
+  }), [debouncedSearchTerm, selectedPriority, sortBy, sortOrder, completedPage, completedItemsPerPage])
 
   const { data: incompleteTodosResponse, isLoading: incompleteLoading, error: incompleteError } = useTodos(incompleteQueryParams)
   const { data: completedTodosResponse, isLoading: completedLoading, error: completedError } = useTodos(completedQueryParams)
@@ -77,6 +86,34 @@ export function TodoList() {
       setSortBy(field)
       setSortOrder('desc')
     }
+    // Reset to first page when sorting changes
+    setCurrentPage(1)
+    setCompletedPage(1)
+  }
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1) // Reset to first page
+  }
+
+  const handleCompletedPageChange = (page: number) => {
+    setCompletedPage(page)
+  }
+
+  const handleCompletedItemsPerPageChange = (items: number) => {
+    setCompletedItemsPerPage(items)
+    setCompletedPage(1) // Reset to first page
+  }
+
+  // Reset pagination when search or filters change
+  const resetPagination = () => {
+    setCurrentPage(1)
+    setCompletedPage(1)
   }
 
   if (incompleteLoading) {
@@ -173,7 +210,10 @@ export function TodoList() {
             placeholder="Search tasks..."
             className="w-full pl-10 pr-4 py-2 border rounded-lg bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              resetPagination()
+            }}
           />
         </div>
 
@@ -182,7 +222,10 @@ export function TodoList() {
           <select
             className="px-3 py-1.5 text-sm border rounded-lg bg-white border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={selectedPriority}
-            onChange={(e) => setSelectedPriority(e.target.value as Priority | '')}
+            onChange={(e) => {
+              setSelectedPriority(e.target.value as Priority | '')
+              resetPagination()
+            }}
           >
             <option value="">All Priorities</option>
             <option value={Priority.HIGH}>High Priority</option>
@@ -264,6 +307,20 @@ export function TodoList() {
                 console.log('Tasks reordered:', reorderedTasks.map(t => t.title))
               }}
             />
+            
+            {/* Active Tasks Pagination */}
+            {incompleteTodosResponse?.pagination && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={incompleteTodosResponse.pagination.page}
+                  totalPages={incompleteTodosResponse.pagination.totalPages}
+                  totalItems={incompleteTodosResponse.pagination.total}
+                  itemsPerPage={incompleteTodosResponse.pagination.limit}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
@@ -303,11 +360,28 @@ export function TodoList() {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>No completed tasks match your filters.</p>
                 </div>
               ) : (
-                completedTodos.map((todo) => (
-                  <div key={todo.id} className="opacity-75">
-                    <TodoItem todo={todo} onEdit={handleEditTodo} />
-                  </div>
-                ))
+                <>
+                  {completedTodos.map((todo) => (
+                    <div key={todo.id} className="opacity-75">
+                      <TodoItem todo={todo} onEdit={handleEditTodo} />
+                    </div>
+                  ))}
+                  
+                  {/* Completed Tasks Pagination */}
+                  {completedTodosResponse?.pagination && completedTodosResponse.pagination.totalPages > 1 && (
+                    <div className="mt-4">
+                      <Pagination
+                        currentPage={completedTodosResponse.pagination.page}
+                        totalPages={completedTodosResponse.pagination.totalPages}
+                        totalItems={completedTodosResponse.pagination.total}
+                        itemsPerPage={completedTodosResponse.pagination.limit}
+                        onPageChange={handleCompletedPageChange}
+                        onItemsPerPageChange={handleCompletedItemsPerPageChange}
+                        showItemsPerPageSelector={false}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
