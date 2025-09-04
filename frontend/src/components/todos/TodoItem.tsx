@@ -25,6 +25,9 @@ interface TodoItemProps {
   onEdit: (todo: Todo) => void
   isDragging?: boolean
   showCreatedDate?: boolean
+  showSelection?: boolean
+  isSelected?: boolean
+  onSelect?: (todoId: string, selected: boolean) => void
 }
 
 const priorityConfig = {
@@ -57,20 +60,31 @@ const priorityConfig = {
   },
 }
 
-export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = true }: TodoItemProps) {
+export function TodoItem({ 
+  todo, 
+  onEdit, 
+  isDragging = false, 
+  showCreatedDate = true, 
+  showSelection = false,
+  isSelected = false,
+  onSelect
+}: TodoItemProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const { toggleComplete, togglePin, deleteTodo } = useTodoMutations()
 
-  const handleToggleComplete = () => {
+  const handleToggleComplete = (e?: React.MouseEvent) => {
+    e?.stopPropagation() // Prevent selection when clicking complete button
     toggleComplete.mutate(todo.id)
   }
 
-  const handleTogglePin = () => {
+  const handleTogglePin = (e?: React.MouseEvent) => {
+    e?.stopPropagation() // Prevent selection when clicking pin button
     togglePin.mutate(todo.id)
   }
 
-  const handleDelete = () => {
+  const handleDelete = (e?: React.MouseEvent) => {
+    e?.stopPropagation() // Prevent selection when clicking delete button
     setShowDeleteConfirm(true)
   }
 
@@ -79,7 +93,8 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
     setShowDeleteConfirm(false)
   }
 
-  const handleEdit = () => {
+  const handleEdit = (e?: React.MouseEvent) => {
+    e?.stopPropagation() // Prevent selection when clicking edit button
     onEdit(todo)
   }
 
@@ -95,12 +110,23 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
           todo.completed && 'opacity-75',
           todo.isPinned && 'ring-2 ring-blue-200 border-blue-300',
           isOverdue && 'ring-2 ring-red-200 border-red-300',
-          isDragging && 'shadow-lg scale-105 opacity-95'
+          isDragging && 'shadow-lg scale-105 opacity-95',
+          showSelection && isSelected && 'ring-2 ring-purple-300 border-purple-400 bg-purple-50',
+          showSelection && !isSelected && 'hover:ring-1 hover:ring-purple-200'
         )}
+        onClick={showSelection ? () => onSelect?.(todo.id, !isSelected) : undefined}
+        style={showSelection ? { cursor: 'pointer' } : undefined}
       >
-      <div className="p-3 sm:p-4">
+      <div className="p-3 sm:p-4 relative">
+        {/* Selection Indicator */}
+        {showSelection && isSelected && (
+          <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+            <Check className="h-3 w-3 text-white" />
+          </div>
+        )}
+        
         <div className="flex items-start gap-3">
-          {/* Complete Checkbox */}
+          {/* Complete Checkbox - Single checkbox for completion */}
           <Button
             variant="ghost"
             size="sm"
@@ -110,7 +136,7 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
                 ? 'bg-green-500 border-green-500 text-white hover:bg-green-600'
                 : 'border-gray-300 hover:border-gray-400'
             )}
-            onClick={handleToggleComplete}
+            onClick={(e) => handleToggleComplete(e)}
             disabled={toggleComplete.isPending}
           >
             {todo.completed && <Check className="h-3.5 w-3.5 sm:h-3 sm:w-3" />}
@@ -125,7 +151,12 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
                     'font-medium cursor-pointer text-gray-900 text-sm sm:text-base leading-tight',
                     todo.completed && 'line-through text-gray-500'
                   )}
-                  onClick={() => setIsExpanded(!isExpanded)}
+                  onClick={(e) => {
+                    if (showSelection) {
+                      e.stopPropagation() // Prevent selection when expanding
+                    }
+                    setIsExpanded(!isExpanded)
+                  }}
                 >
                   {todo.title}
                 </h3>
@@ -174,7 +205,7 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
                     'h-9 w-9 sm:h-8 sm:w-8 p-0',
                     todo.isPinned && 'text-blue-600'
                   )}
-                  onClick={handleTogglePin}
+                  onClick={(e) => handleTogglePin(e)}
                   disabled={togglePin.isPending}
                   title={todo.isPinned ? 'Unpin' : 'Pin'}
                 >
@@ -190,7 +221,7 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
                   variant="ghost"
                   size="sm"
                   className="h-9 w-9 sm:h-8 sm:w-8 p-0"
-                  onClick={handleEdit}
+                  onClick={(e) => handleEdit(e)}
                   title="Edit"
                 >
                   <Edit className="h-4 w-4" />
@@ -201,7 +232,7 @@ export function TodoItem({ todo, onEdit, isDragging = false, showCreatedDate = t
                   variant="ghost"
                   size="sm"
                   className="h-9 w-9 sm:h-8 sm:w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={handleDelete}
+                  onClick={(e) => handleDelete(e)}
                   disabled={deleteTodo.isPending}
                   title="Delete"
                 >

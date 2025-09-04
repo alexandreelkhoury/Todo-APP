@@ -10,7 +10,7 @@ import { ShareActions } from './ShareActions'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Pagination } from '@/components/ui/Pagination'
-import { useTodos, useTodoStats } from '@/hooks/useTodos'
+import { useTodos, useTodoStats, useTodoMutations } from '@/hooks/useTodos'
 import { Todo, Priority, TodoQueryParams } from '@/types'
 import { 
   Plus, 
@@ -24,7 +24,10 @@ import {
   ChevronDown,
   ChevronUp,
   Share2,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  Check,
+  X
 } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
 import { LoadingSpinner, TodoSkeleton, StatsSkeleton } from '@/components/ui/LoadingSpinner'
@@ -32,6 +35,7 @@ import { groupTodosByDate } from '@/lib/dateUtils'
 
 export function TodoList() {
   const queryClient = useQueryClient()
+  const { deleteTodo } = useTodoMutations()
   const [showForm, setShowForm] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | undefined>()
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,6 +44,8 @@ export function TodoList() {
   const [sortBy, setSortBy] = useState<'createdAt' | 'priority' | 'dueDate'>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [showTodayOnly, setShowTodayOnly] = useState(false)
+  const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set())
+  const [showBulkActions, setShowBulkActions] = useState(false)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -115,6 +121,49 @@ export function TodoList() {
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingTodo(undefined)
+  }
+
+  // Bulk selection handlers
+  const handleSelectTodo = (todoId: string, isSelected: boolean) => {
+    setSelectedTodos(prev => {
+      const newSet = new Set(prev)
+      if (isSelected) {
+        newSet.add(todoId)
+      } else {
+        newSet.delete(todoId)
+      }
+      setShowBulkActions(newSet.size > 0)
+      return newSet
+    })
+  }
+
+  const handleSelectAll = () => {
+    if (selectedTodos.size === incompleteTodos.length) {
+      setSelectedTodos(new Set())
+      setShowBulkActions(false)
+    } else {
+      setSelectedTodos(new Set(incompleteTodos.map(todo => todo.id)))
+      setShowBulkActions(true)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedTodos.size === 0) return
+    
+    try {
+      // Delete all selected todos using the mutation
+      const deletePromises = Array.from(selectedTodos).map(todoId => 
+        deleteTodo.mutateAsync(todoId)
+      )
+      
+      await Promise.all(deletePromises)
+      
+      // Clear selection
+      setSelectedTodos(new Set())
+      setShowBulkActions(false)
+    } catch (error) {
+      console.error('Failed to delete todos:', error)
+    }
   }
 
   const toggleSort = (field: typeof sortBy) => {
@@ -379,6 +428,40 @@ export function TodoList() {
         </div>
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      {showBulkActions && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-blue-800">
+              {selectedTodos.size} task{selectedTodos.size !== 1 ? 's' : ''} selected
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedTodos(new Set())
+                setShowBulkActions(false)
+              }}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <X className="h-4 w-4" />
+              Clear Selection
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="gap-1"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Active Tasks */}
       <div className="space-y-3">
         {incompleteTodos.length === 0 ? (
@@ -399,10 +482,26 @@ export function TodoList() {
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <h2 className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-                Active Tasks ({incompleteTodos.length})
-              </h2>
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+                  Active Tasks ({incompleteTodos.length})
+                </h2>
+                {showBulkActions && (
+                  <p className="text-xs text-purple-600 mt-1">Click tasks to select • Click title to expand</p>
+                )}
+              </div>
+              {incompleteTodos.length > 0 && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedTodos.size === incompleteTodos.length && incompleteTodos.length > 0}
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <span className="text-xs text-gray-500">Select All</span>
+                </label>
+              )}
             </div>
             
             {/* Render grouped view for date sorting, regular list for other sorting */}
@@ -414,15 +513,37 @@ export function TodoList() {
                     dateLabel={dateLabel}
                     todos={todos}
                     onEdit={handleEditTodo}
+                    showSelection={true}
+                    selectedTodos={selectedTodos}
+                    onSelect={handleSelectTodo}
+                  />
+                ))}
+              </div>
+            ) : sortBy === 'priority' ? (
+              <div className="space-y-2">
+                {incompleteTodos.map((todo) => (
+                  <TodoItem 
+                    key={todo.id} 
+                    todo={todo} 
+                    onEdit={handleEditTodo}
+                    showSelection={true}
+                    isSelected={selectedTodos.has(todo.id)}
+                    onSelect={handleSelectTodo}
                   />
                 ))}
               </div>
             ) : (
-              <div className="space-y-2">
-                {incompleteTodos.map((todo) => (
-                  <TodoItem key={todo.id} todo={todo} onEdit={handleEditTodo} />
-                ))}
-              </div>
+              <DraggableTaskList
+                tasks={incompleteTodos}
+                onEdit={handleEditTodo}
+                onReorder={(tasks) => {
+                  // Handle reordering logic if needed
+                  console.log('Reordered tasks:', tasks)
+                }}
+                showSelection={true}
+                selectedTodos={selectedTodos}
+                onSelect={handleSelectTodo}
+              />
             )}
             
             {/* Active Tasks Pagination */}

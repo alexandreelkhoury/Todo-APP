@@ -28,9 +28,12 @@ interface DraggableTaskListProps {
   tasks: Todo[]
   onEdit: (todo: Todo) => void
   onReorder?: (reorderedTasks: Todo[]) => void
+  showSelection?: boolean
+  selectedTodos?: Set<string>
+  onSelect?: (todoId: string, selected: boolean) => void
 }
 
-export function DraggableTaskList({ tasks, onEdit, onReorder }: DraggableTaskListProps) {
+export function DraggableTaskList({ tasks, onEdit, onReorder, showSelection = false, selectedTodos, onSelect }: DraggableTaskListProps) {
   const [items, setItems] = useState(tasks)
   
   const sensors = useSensors(
@@ -80,7 +83,14 @@ export function DraggableTaskList({ tasks, onEdit, onReorder }: DraggableTaskLis
       <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-3">
           {items.map((task) => (
-            <SortableTodoItem key={task.id} todo={task} onEdit={onEdit} />
+            <SortableTodoItem 
+              key={task.id} 
+              todo={task} 
+              onEdit={onEdit}
+              showSelection={showSelection}
+              isSelected={selectedTodos?.has(task.id) || false}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       </SortableContext>

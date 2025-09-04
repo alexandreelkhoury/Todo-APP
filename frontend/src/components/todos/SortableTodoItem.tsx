@@ -9,9 +9,12 @@ import { GripVertical } from 'lucide-react'
 interface SortableTodoItemProps {
   todo: Todo
   onEdit: (todo: Todo) => void
+  showSelection?: boolean
+  isSelected?: boolean
+  onSelect?: (todoId: string, selected: boolean) => void
 }
 
-export function SortableTodoItem({ todo, onEdit }: SortableTodoItemProps) {
+export function SortableTodoItem({ todo, onEdit, showSelection = false, isSelected = false, onSelect }: SortableTodoItemProps) {
   const {
     attributes,
     listeners,
@@ -51,6 +54,9 @@ export function SortableTodoItem({ todo, onEdit }: SortableTodoItemProps) {
             todo={todo} 
             onEdit={onEdit}
             isDragging={isDragging}
+            showSelection={showSelection}
+            isSelected={isSelected}
+            onSelect={onSelect}
           />
         </div>
       </div>

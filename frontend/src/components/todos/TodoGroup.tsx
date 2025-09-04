@@ -8,9 +8,12 @@ interface TodoGroupProps {
   dateLabel: string
   todos: Todo[]
   onEdit: (todo: Todo) => void
+  showSelection?: boolean
+  selectedTodos?: Set<string>
+  onSelect?: (todoId: string, selected: boolean) => void
 }
 
-export function TodoGroup({ dateLabel, todos, onEdit }: TodoGroupProps) {
+export function TodoGroup({ dateLabel, todos, onEdit, showSelection = false, selectedTodos, onSelect }: TodoGroupProps) {
   return (
     <div className="space-y-3">
       {/* Date Header */}
@@ -33,6 +36,9 @@ export function TodoGroup({ dateLabel, todos, onEdit }: TodoGroupProps) {
             todo={todo} 
             onEdit={onEdit}
             showCreatedDate={false} // Don't show individual dates since we're grouping
+            showSelection={showSelection}
+            isSelected={selectedTodos?.has(todo.id) || false}
+            onSelect={onSelect}
           />
         ))}
       </div>
