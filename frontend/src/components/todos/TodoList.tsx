@@ -309,7 +309,7 @@ export function TodoList() {
             />
             
             {/* Active Tasks Pagination */}
-            {incompleteTodosResponse?.pagination && (
+            {incompleteTodosResponse?.pagination && incompleteTodosResponse.pagination.total > 0 && (
               <div className="mt-6">
                 <Pagination
                   currentPage={incompleteTodosResponse.pagination.page}
@@ -369,7 +369,7 @@ export function TodoList() {
                   ))}
                   
                   {/* Completed Tasks Pagination */}
-                  {completedTodosResponse?.pagination && completedTodosResponse.pagination.totalPages > 1 && (
+                  {completedTodosResponse?.pagination && completedTodosResponse.pagination.total > 0 && (
                     <div className="mt-4">
                       <Pagination
                         currentPage={completedTodosResponse.pagination.page}

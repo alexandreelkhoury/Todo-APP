@@ -64,7 +64,8 @@ export function Pagination({
   const startItem = (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
-  if (totalPages <= 1) {
+  // Only hide pagination if there are no items at all
+  if (totalItems === 0) {
     return null
   }
 
@@ -77,81 +78,83 @@ export function Pagination({
         <span className="font-medium">{totalItems}</span> results
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center gap-2">
-        {/* First Page */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          className="h-8 w-8 p-0"
-          title="First page"
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
+      {/* Pagination Controls - Only show if multiple pages */}
+      {totalPages > 1 && (
+        <div className="flex items-center gap-2">
+          {/* First Page */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
+            title="First page"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
 
-        {/* Previous Page */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="h-8 w-8 p-0"
-          title="Previous page"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+          {/* Previous Page */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
+            title="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-        {/* Page Numbers */}
-        <div className="flex items-center gap-1">
-          {getVisiblePages().map((page, index) => {
-            if (page === '...') {
+          {/* Page Numbers */}
+          <div className="flex items-center gap-1">
+            {getVisiblePages().map((page, index) => {
+              if (page === '...') {
+                return (
+                  <div key={`ellipsis-${index}`} className="px-2">
+                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                  </div>
+                )
+              }
+
               return (
-                <div key={`ellipsis-${index}`} className="px-2">
-                  <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                </div>
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => onPageChange(page as number)}
+                  className="h-8 min-w-[32px] px-2"
+                >
+                  {page}
+                </Button>
               )
-            }
+            })}
+          </div>
 
-            return (
-              <Button
-                key={page}
-                variant={page === currentPage ? 'primary' : 'outline'}
-                size="sm"
-                onClick={() => onPageChange(page as number)}
-                className="h-8 min-w-[32px] px-2"
-              >
-                {page}
-              </Button>
-            )
-          })}
+          {/* Next Page */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
+            title="Next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          {/* Last Page */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
+            title="Last page"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
         </div>
-
-        {/* Next Page */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="h-8 w-8 p-0"
-          title="Next page"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-
-        {/* Last Page */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          className="h-8 w-8 p-0"
-          title="Last page"
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
-      </div>
+      )}
 
       {/* Items Per Page Selector */}
       {showItemsPerPageSelector && onItemsPerPageChange && (
