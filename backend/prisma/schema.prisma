@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["maxiphy_todo"]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  todos Todo[]
+
+  @@map("users")
+  @@schema("maxiphy_todo")
+}
+
+model Todo {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  priority    String      @default("MEDIUM") // HIGH, MEDIUM, LOW
+  dueDate     DateTime?
+  completed   Boolean     @default(false)
+  isPinned    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("todos")
+  @@schema("maxiphy_todo")
+}

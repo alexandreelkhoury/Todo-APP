@@ -1,0 +1,63 @@
+{
+  "name": "maxiphy-todo-app",
+  "version": "1.0.0",
+  "description": "Full-stack todo application for Maxiphy technical assessment",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "build": "npm run backend:build && npm run frontend:build",
+    "start": "concurrently \"npm run backend:start\" \"npm run frontend:start\"",
+    "test": "npm run backend:test && npm run frontend:test",
+    "lint": "npm run backend:lint && npm run frontend:lint",
+    "clean": "npm run backend:clean && npm run frontend:clean && rm -rf node_modules",
+    "setup": "npm install && npm run backend:setup && npm run frontend:setup",
+    "db:up": "docker-compose up -d postgres",
+    "db:down": "docker-compose down",
+    "db:reset": "npm run backend:db:reset",
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:start": "cd backend && npm run start:prod",
+    "backend:test": "cd backend && npm run test",
+    "backend:test:watch": "cd backend && npm run test:watch",
+    "backend:lint": "cd backend && npm run lint",
+    "backend:clean": "cd backend && rm -rf dist node_modules",
+    "backend:setup": "cd backend && npm install && npx prisma generate",
+    "backend:db:migrate": "cd backend && npx prisma migrate dev",
+    "backend:db:reset": "cd backend && npx prisma migrate reset --force",
+    "backend:db:studio": "cd backend && npx prisma studio",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:start": "cd frontend && npm run start",
+    "frontend:test": "cd frontend && npm run test",
+    "frontend:test:watch": "cd frontend && npm run test:watch",
+    "frontend:lint": "cd frontend && npm run lint",
+    "frontend:clean": "cd frontend && rm -rf .next out node_modules",
+    "frontend:setup": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "nextjs",
+    "nestjs",
+    "prisma",
+    "postgresql",
+    "typescript",
+    "todo-app",
+    "full-stack"
+  ],
+  "author": "Maxiphy Assessment Candidate",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/maxiphy-todo-app"
+  }
+}
