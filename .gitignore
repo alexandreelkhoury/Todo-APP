@@ -96,3 +96,5 @@ coverage/
 # Build outputs
 dist/
 build/
+
+claude.MD
