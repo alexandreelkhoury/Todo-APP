@@ -37,13 +37,16 @@ export function SortableTodoItem({ todo, onEdit }: SortableTodoItemProps) {
         <div
           {...attributes}
           {...listeners}
-          className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10"
+          className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 touch-manipulation"
+          style={{ touchAction: 'none' }}
         >
-          <GripVertical className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+          <div className="p-1 sm:p-0">
+            <GripVertical className="h-5 w-5 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600" />
+          </div>
         </div>
         
         {/* Todo Item with left padding for drag handle */}
-        <div className="pl-8">
+        <div className="pl-7 sm:pl-8">
           <TodoItem 
             todo={todo} 
             onEdit={onEdit}
