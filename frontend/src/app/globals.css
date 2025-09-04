@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+/* Beautiful Light Mode Color Scheme */
+:root {
+  /* Page backgrounds */
+  --background: #fafbfc;
+  --foreground: #1a1d29;
+  
+  /* Navigation */
+  --nav-bg: #ffffff;
+  --nav-text: #1a1d29;
+  --nav-border: #e8eaed;
+  
+  /* Cards and containers */
+  --card-bg: #ffffff;
+  --card-border: #e8eaed;
+  --card-shadow: rgba(60, 64, 67, 0.08);
+  
+  /* Form elements */
+  --input-bg: #ffffff;
+  --input-text: #1a1d29;
+  --input-border: #dadce0;
+  --input-border-focus: #4285f4;
+  --input-placeholder: #9aa0a6;
+  
+  /* Text hierarchy */
+  --text-primary: #1a1d29;
+  --text-secondary: #5f6368;
+  --text-muted: #80868b;
+  --text-disabled: #dadce0;
+  
+  /* Accent colors */
+  --accent-primary: #4285f4;
+  --accent-primary-hover: #3367d6;
+  --accent-secondary: #f8f9fa;
+  --accent-secondary-hover: #f1f3f4;
+  
+  /* Status colors */
+  --success: #34a853;
+  --success-bg: #e6f4ea;
+  --warning: #fbbc04;
+  --warning-bg: #fef7e0;
+  --error: #ea4335;
+  --error-bg: #fce8e6;
+  
+  /* Priority colors */
+  --priority-high: #ea4335;
+  --priority-high-bg: #fce8e6;
+  --priority-medium: #fbbc04;
+  --priority-medium-bg: #fef7e0;
+  --priority-low: #34a853;
+  --priority-low-bg: #e6f4ea;
+}
+
+html, body {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+/* Beautiful Component Styling */
+
+/* Navigation */
+nav {
+  background-color: var(--nav-bg) !important;
+  color: var(--nav-text) !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: 0 1px 3px var(--card-shadow) !important;
+}
+
+/* Cards and containers */
+[class*="bg-white"], .bg-white {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  box-shadow: 0 1px 3px var(--card-shadow) !important;
+}
+
+/* Beautiful text hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+p, span {
+  color: var(--text-secondary) !important;
+}
+
+.text-muted, small {
+  color: var(--text-muted) !important;
+}
+
+/* Form elements with focus states */
+input, select, textarea {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  color-scheme: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--input-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1) !important;
+  outline: none !important;
+}
+
+
+/* Placeholder styling */
+::placeholder {
+  color: var(--input-placeholder) !important;
+  opacity: 1;
+}
+
+/* Button styling */
+button {
+  transition: all 0.2s ease !important;
+  border-radius: 8px !important;
+}
+
+/* Primary buttons */
+.bg-blue-600, [class*="bg-blue-6"] {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.bg-blue-600:hover, [class*="bg-blue-6"]:hover {
+  background-color: var(--accent-primary-hover) !important;
+}
+
+/* Success/Green elements */
+.text-green-600, [class*="text-green-6"] {
+  color: var(--success) !important;
+}
+
+.bg-green-50, [class*="bg-green-5"] {
+  background-color: var(--success-bg) !important;
+}
+
+/* Warning/Orange elements */
+.text-orange-600, [class*="text-orange-6"] {
+  color: var(--warning) !important;
+}
+
+.bg-orange-50, [class*="bg-orange-5"] {
+  background-color: var(--warning-bg) !important;
+}
+
+/* Error/Red elements */
+.text-red-600, [class*="text-red-6"] {
+  color: var(--error) !important;
+}
+
+.bg-red-50, [class*="bg-red-5"] {
+  background-color: var(--error-bg) !important;
+}
+
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+
+/* Focus visible styles for better accessibility */
+.focus-visible\:ring-2:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px theme(colors.blue.500);
+}
+
+/* Custom animation for loading states */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Remove default button and input styles */
+button, input, textarea, select {
+  font-family: inherit;
+}
+
+/* Ensure proper text rendering */
+body {
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  font-variation-settings: 'opsz' 32;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
