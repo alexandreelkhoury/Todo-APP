@@ -138,14 +138,14 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 
 ## 🎯 Bonus Features Implemented
 
-- [ ] Tanstack Query for data caching
-- [ ] Debounced search functionality
-- [ ] Task pinning capability
-- [ ] Backend tests with Jest
-- [ ] Frontend tests with React Testing Library
-- [ ] Pagination for task lists
-- [ ] Advanced sorting options
-- [ ] Consistent UI/UX theming
+- [x] Tanstack Query for data caching
+- [x] Debounced search functionality
+- [x] Task pinning capability
+- [x] Backend tests with Jest
+- [x] Frontend tests with React Testing Library
+- [x] Pagination for task lists
+- [x] Advanced sorting options
+- [x] Consistent UI/UX theming
 
 ## 🧪 Testing
 
