@@ -203,8 +203,8 @@ export function TodoList() {
     setCompletedPage(1)
   }
 
-  // Loading states with proper skeletons
-  if (incompleteLoading && !incompleteTodosResponse) {
+  // Loading states with proper skeletons - only show on initial load
+  if (incompleteLoading && !incompleteTodosResponse && !stats) {
     return (
       <div className="space-y-6">
         {/* Stats Loading */}
@@ -464,7 +464,7 @@ export function TodoList() {
 
       {/* Active Tasks */}
       <div className="space-y-3">
-        {incompleteTodos.length === 0 ? (
+        {incompleteTodos.length === 0 && !incompleteLoading ? (
           <div className="text-center py-8 sm:py-12">
             <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-gray-100 rounded-full flex items-center justify-center">
               <Square className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />

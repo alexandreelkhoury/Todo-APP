@@ -10,6 +10,7 @@ export function useTodos(params?: TodoQueryParams) {
   return useQuery({
     queryKey: ['todos', params],
     queryFn: () => todosService.getTodos(params),
+    keepPreviousData: true,
     retry: (failureCount, error) => {
       // Don't retry on 401/403 errors
       if (error instanceof AxiosError && [401, 403].includes(error.response?.status || 0)) {
