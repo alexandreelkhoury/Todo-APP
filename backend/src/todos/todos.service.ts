@@ -72,9 +72,15 @@ export class TodosService {
         },
       });
 
-      // Sort by priority manually
+      // Sort by priority manually, but keep pinned tasks at top
       const priorityOrder = { HIGH: 3, MEDIUM: 2, LOW: 1 };
       const sortedTodos = allTodos.sort((a, b) => {
+        // First, sort by pinned status (pinned tasks always come first)
+        if (a.isPinned !== b.isPinned) {
+          return b.isPinned ? 1 : -1; // pinned tasks first
+        }
+        
+        // Then sort by priority
         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
         

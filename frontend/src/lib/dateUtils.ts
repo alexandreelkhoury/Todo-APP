@@ -35,15 +35,9 @@ export function getRelativeDateLabel(date: string | Date): string {
 }
 
 export function groupTodosByDate(todos: any[], sortOrder: 'asc' | 'desc' = 'desc') {
-  // Sort todos by createdAt date based on sortOrder
-  const sortedTodos = [...todos].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime()
-    const dateB = new Date(b.createdAt).getTime()
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB
-  })
-  
+  // Don't re-sort - preserve the order from backend (which already handles pinned first)
   // Group by date
-  const grouped = sortedTodos.reduce((groups, todo) => {
+  const grouped = todos.reduce((groups, todo) => {
     const dateLabel = getRelativeDateLabel(todo.createdAt)
     
     if (!groups[dateLabel]) {
