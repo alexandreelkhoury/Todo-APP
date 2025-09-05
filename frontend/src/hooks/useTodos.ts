@@ -165,12 +165,41 @@ export function useTodoMutations() {
 
   const togglePin = useMutation({
     mutationFn: todosService.togglePin,
+    onMutate: async (todoId) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['todos'] })
+
+      // Snapshot the previous value
+      const previousTodos = queryClient.getQueriesData({ queryKey: ['todos'] })
+
+      // Optimistically update to the new value
+      queryClient.setQueriesData({ queryKey: ['todos'] }, (old: any) => {
+        if (!old?.todos) return old
+        
+        return {
+          ...old,
+          todos: old.todos.map((todo: any) => 
+            todo.id === todoId ? { ...todo, isPinned: !todo.isPinned } : todo
+          )
+        }
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousTodos }
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       // Optional: Show toast for pin toggle
       // toast.info(data.isPinned ? 'Task Pinned' : 'Task Unpinned')
     },
-    onError: (error) => {
+    onError: (error, todoId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTodos) {
+        context.previousTodos.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      
       console.error('Failed to toggle todo pin:', error)
       if (error instanceof AxiosError) {
         const message = error.response?.data?.message || 'Failed to update task'
@@ -184,6 +213,10 @@ export function useTodoMutations() {
       } else {
         toast.error('Update Failed', 'An unexpected error occurred')
       }
+    },
+    onSettled: () => {
+      // Always refetch after error or success:
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
     },
   })
 
